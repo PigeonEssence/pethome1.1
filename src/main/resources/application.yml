@@ -1,0 +1,14 @@
+server:
+  port: 8080
+
+#数据源配置
+spring:
+  datasource:
+    username: root
+    password: 123456
+    url: jdbc:mysql:///pethome
+    driver-class-name: com.mysql.jdbc.Driver
+#mybatis配置
+mybatis:
+  mapper-locations: classpath:cn/itsources/*/mapper/*Mapper.xml
+  type-aliases-package: cn.itsources.*.domain

@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--
+    namespace: 名称空间 : 指定具体的映射文件
+-->
+<mapper namespace="cn.itsources.pethome.org.mapper.EmployeeMapper">
+    <!--分页查询的结果映射-->
+    <resultMap id="selectListResultMap" type="cn.itsources.pethome.org.domain.Employee">
+        <id     column="id"     property="id" />
+        <result column="username"     property="username" />
+        <result column="email"     property="email" />
+        <result column="password"     property="password" />
+        <result column="phone"     property="phone" />
+        <result column="age"     property="age" />
+        <result column="state"     property="state" />
+    </resultMap>
+
+
+
+    <select id="selectAll" resultType="cn.itsources.pethome.org.domain.Employee">
+        SELECT
+            id,
+            username,
+            email,
+            phone,
+            age,
+            username,
+           state
+        FROM t_employee
+    </select>
+
+    <!--分页查询条件-->
+    <sql id="selectListWhere">
+        <where>
+            <if test="keyword != null">
+                and ( username like CONCAT("%",#{keyword},"%")  or  email like CONCAT("%",#{keyword},"%") )
+            </if>
+        </where>
+    </sql>
+
+    <!--查询总条数-->
+    <select id="selectCount" resultType="java.lang.Long">
+        SELECT count(id) FROM t_employee
+        <include refid="selectListWhere" />
+    </select>
+
+    <!--分页查询的列-->
+    <sql id="selectListColumns">
+            id,
+            username,
+            email,
+            phone,
+            age,
+            password,
+            state
+    </sql>
+
+
+    <!--查询列表-->
+    <select id="selectList" resultMap="selectListResultMap">
+        SELECT <include refid="selectListColumns" />
+        FROM t_employee
+        <include refid="selectListWhere" />
+        LIMIT #{first},#{pageSize}
+    </select>
+    <!--=================================================分页查询，高级查询================================================-->
+
+    <!--通过ID批量删除-->
+    <delete id="deleteByIds">
+        DELETE FROM t_employee WHERE id in
+        <foreach collection="ids" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+    </delete>
+
+    <!--========================================================高级操作=================================================-->
+    <!--删除一个员工-->
+    <delete id="delete">
+        DELETE FROM t_employee WHERE id = #{id}
+    </delete>
+</mapper>

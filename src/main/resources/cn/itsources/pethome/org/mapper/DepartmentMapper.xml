@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="cn.itsources.pethome.org.mapper.DepartmentMapper">
+
+
+    <!--分页查询的结果映射-->
+    <resultMap id="selectListResultMap" type="cn.itsources.pethome.org.domain.Department">
+        <id     column="id"     property="id" />
+        <result column="name"     property="name" />
+        <result column="sn"     property="sn" />
+        <result column="state"     property="state" />
+
+        <!--部门经理-->
+        <association property="manager" javaType="cn.itsources.pethome.org.domain.Employee">
+            <id     column="e_id"     property="id" />
+            <result column="e_username"     property="username" />
+        </association>
+
+        <!--上级部门-->
+        <association property="parent" javaType="cn.itsources.pethome.org.domain.Department">
+            <id     column="p_id"     property="id" />
+            <result column="p_name"     property="name" />
+        </association>
+
+        <!--映射二级部门集合-->
+        <collection property="children" ofType="cn.itsources.pethome.org.domain.Department">
+            <id     column="c_id"     property="id" />
+            <result column="c_name"     property="name" />
+        </collection>
+
+    </resultMap>
+
+    <!--查询的基础列-->
+    <sql id="baseColumns">
+        id,
+        sn,
+        name,
+        state
+    </sql>
+
+
+    <!--根据ID查询部门-->
+    <select id="selectById" resultType="cn.itsources.pethome.org.domain.Department">
+        SELECT
+        /*查询基础列*/
+        <include refid="baseColumns" />
+        FROM t_department WHERE id = #{id}
+    </select>
+
+    <!--查询所有部门-->
+    <select id="selectAll" resultType="cn.itsources.pethome.org.domain.Department">
+        SELECT
+        /*查询基础列*/
+        <include refid="baseColumns" />
+        FROM t_department
+    </select>
+
+
+    <!--新建部门-->
+    <insert id="insert" keyProperty="id" keyColumn="id" useGeneratedKeys="true">
+        INSERT INTO t_department(sn,name,state,manager_id,parent_id)
+        VALUES (#{sn} , #{name} , #{state}, #{manager.id}, #{parent.id})
+    </insert>
+
+    <!--修改一个部门-->
+    <update id="updateById">
+        UPDATE t_department
+        SET sn = #{sn},
+            name = #{name},
+            state = #{state},
+            manager_id = #{manager.id},
+            parent_id = #{parent.id}
+        WHERE id = #{id}
+    </update>
+
+    <!--删除一个部门-->
+    <delete id="delete">
+        DELETE FROM t_department WHERE id = #{id}
+    </delete>
+
+    <!--分页查询条件-->
+    <sql id="selectListWhere">
+        <where>
+            <if test="keyword != null">
+                and ( d.name like CONCAT("%",#{keyword},"%")  or  d.sn like CONCAT("%",#{keyword},"%") )
+            </if>
+        </where>
+    </sql>
+
+    <!--分页查询的列-->
+    <sql id="selectListColumns">
+        d.id,
+        d.sn,
+        d.name,
+        d.state,
+
+        e.id as e_id ,
+        e.username as e_username,
+
+        p.id as p_id,
+        p.name as p_name
+    </sql>
+
+    <!--查询总条数-->
+    <select id="selectCount" resultType="java.lang.Long">
+        SELECT count(d.id) FROM t_department d
+        <include refid="selectListWhere" />
+    </select>
+
+    <!--查询列表-->
+    <select id="selectList" resultMap="selectListResultMap">
+        SELECT <include refid="selectListColumns" />
+        FROM t_department d
+        LEFT JOIN t_employee e ON d.manager_id = e.id
+        LEFT JOIN t_department p on d.parent_id = p.id
+        <include refid="selectListWhere" />
+        LIMIT #{first},#{pageSize}
+    </select>
+
+    <!--查询树-->
+    <select id="selectTree" resultMap="selectListResultMap">
+        SELECT
+            p.id,
+            p.name,
+
+            c.id as c_id,
+            c.name as c_name
+
+        FROM t_department p LEFT JOIN t_department c ON p.id = c.parent_id
+
+        WHERE p.parent_id = 0
+    </select>
+
+    <!--通过ID批量删除-->
+    <delete id="deleteByIds">
+        DELETE FROM t_department WHERE id in
+        <foreach collection="ids" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+    </delete>
+
+
+</mapper>
